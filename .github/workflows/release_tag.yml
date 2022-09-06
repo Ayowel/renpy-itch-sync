@@ -1,0 +1,31 @@
+name: Create release tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_number:
+        description: 'The version to tag (without the "v" prefix)'
+        required: true
+        type: string
+      base_branch:
+        description: Tagged branch. A new commit will be created on the branch
+        required: true
+        default: main
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.base_branch }}
+    - name: Update recorded version
+      run: sed -i -Ee 's/(config.version\s*=\s*")[^"]+"/\1${{ inputs.version_number }}"/g' game/options.rpy
+    - run: git diff
+    - name: Commit files changes
+      uses: EndBug/add-and-commit@v9
+      with:
+        push: true
+        message: "autobot: set version to ${{ inputs.version_number }}"
+        tag: v${{ inputs.version_number }} --force

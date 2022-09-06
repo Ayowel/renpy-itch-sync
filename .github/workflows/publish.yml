@@ -8,11 +8,11 @@ on:
         required: true
         type: string
       itch_release:
-        description: Whether to release to itch or not
+        description: Release to itch
         default: true
         type: boolean
       github_release:
-        description: Whether to create a GitHub release or not
+        description: Release to GitHub
         default: true
         type: boolean
 

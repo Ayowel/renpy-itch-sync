@@ -1,5 +1,9 @@
 # Changelog
 
+## Changelog v0.1.3
+
+* Add tag workflow
+
 ## Changelog v0.1.2
 
 * Add option to disable release targets
