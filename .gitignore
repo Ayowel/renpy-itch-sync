@@ -1,4 +1,8 @@
 /cache/
+/game/cache/
 /saves/
+/game/saves/
+/**/*.rpyc
+/**/*.rpymc
 /log.txt
 /traceback.txt

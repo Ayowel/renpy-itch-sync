@@ -1,0 +1,75 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_number:
+        description: 'The version to release. A matching tag prefixed with "v" MUST exist'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: v${{ inputs.version_number }}
+        path: project
+    - name: "Prepare Ren'Py cache"
+      id: cache-renpy
+      uses: actions/cache@v3
+      with:
+        path: renpy
+        key: ${{ runner.os }}-renpy
+    - name: "Download Ren'Py"
+      if: steps.cache-renpy.outputs.cache-hit != 'true'
+      run: mkdir renpy && curl https://www.renpy.org/dl/8.0.2/renpy-8.0.2-sdk.tar.bz2 | tar -xjC renpy --strip-components 1
+    - name: Build distribution
+      run: ./renpy/renpy.sh "" distribute project --package mac --package win --package linux --destination target
+
+    - name: Get changelog information
+      run: awk -e '/^## /{a+=1} {if(a==1)print$0}' project/CHANGELOG.md >release.md
+    - run: printf '\n## Checksums\n\nChecksum | File\n:--- | :---\n' >>release.md
+    - name: Generate checksum information
+      run: md5sum target/* | sed -Ee 's_^([^\s]+)\s+_\1 \| _g' >>release.md
+    - name: Show current information
+      run: ls target; cat release.md
+
+    - name: Push windows version to itch.io
+      uses: manleydev/butler-publish-itchio-action@master
+      env:
+        BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
+        ITCH_GAME: itchsync
+        ITCH_USER: ayowel
+        CHANNEL: win
+        PACKAGE: target/itchsync-${{ inputs.version_number }}-win.zip
+        VERSION: ${{ inputs.version_number }}
+    - name: Push linux version to itch.io
+      uses: manleydev/butler-publish-itchio-action@master
+      env:
+        BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
+        ITCH_GAME: itchsync
+        ITCH_USER: ayowel
+        CHANNEL: linux
+        PACKAGE: target/itchsync-${{ inputs.version_number }}-linux.tar.bz2
+        VERSION: ${{ inputs.version_number }}
+    - name: Push mac version to itch.io
+      uses: manleydev/butler-publish-itchio-action@master
+      env:
+        BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
+        ITCH_GAME: itchsync
+        ITCH_USER: ayowel
+        CHANNEL: mac
+        PACKAGE: target/itchsync-${{ inputs.version_number }}-mac.zip
+        VERSION: ${{ inputs.version_number }}
+
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v0.1.14
+      with:
+        tag_name: v${{ inputs.version_number }}
+        release_name: Release v${{ inputs.version_number }}
+        body_path: release.md
+        fail_on_unmatched_files: true
+        files: target/*
