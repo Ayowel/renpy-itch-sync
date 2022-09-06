@@ -7,6 +7,14 @@ on:
         description: 'The version to release. A matching tag prefixed with "v" MUST exist'
         required: true
         type: string
+      itch_release:
+        description: Whether to release to itch or not
+        default: true
+        type: boolean
+      github_release:
+        description: Whether to create a GitHub release or not
+        default: true
+        type: boolean
 
 jobs:
   build:
@@ -40,6 +48,7 @@ jobs:
 
     - name: Push windows version to itch.io
       uses: manleydev/butler-publish-itchio-action@master
+      if: inputs.itch_release
       env:
         BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
         ITCH_GAME: itchsync
@@ -49,6 +58,7 @@ jobs:
         VERSION: ${{ inputs.version_number }}
     - name: Push linux version to itch.io
       uses: manleydev/butler-publish-itchio-action@master
+      if: inputs.itch_release
       env:
         BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
         ITCH_GAME: itchsync
@@ -58,6 +68,7 @@ jobs:
         VERSION: ${{ inputs.version_number }}
     - name: Push mac version to itch.io
       uses: manleydev/butler-publish-itchio-action@master
+      if: inputs.itch_release
       env:
         BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
         ITCH_GAME: itchsync
@@ -68,9 +79,10 @@ jobs:
 
     - name: Create GitHub release
       uses: softprops/action-gh-release@v0.1.14
+      if: inputs.github_release
       with:
+        name: Release v${{ inputs.version_number }}
         tag_name: v${{ inputs.version_number }}
-        release_name: Release v${{ inputs.version_number }}
         body_path: release.md
         fail_on_unmatched_files: true
         files: target/*

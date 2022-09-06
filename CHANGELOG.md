@@ -1,6 +1,11 @@
 # Changelog
 
-## Changelog v0.2.0
+## Changelog v0.1.2
+
+* Add option to disable release targets
+* Rename misnamed parameters in github release action
+
+## Changelog v0.1.1
 
 * Improve checksum information
 
